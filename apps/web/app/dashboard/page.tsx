@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/app/(auth)/actions'
+import { startSession } from '@/app/session/actions'
 import { redirect } from 'next/navigation'
 
 export default async function DashboardPage() {
@@ -21,8 +22,6 @@ export default async function DashboardPage() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f7f6f2', fontFamily: 'system-ui, sans-serif' }}>
-
-      {/* Header */}
       <header style={{
         backgroundColor: 'white',
         borderBottom: '1px solid #e5e7eb',
@@ -39,14 +38,17 @@ export default async function DashboardPage() {
             {profile?.full_name || user.email}
           </span>
           <form action={signOut}>
-            <button type="submit" style={{
-              padding: '0.4rem 1rem',
-              border: '1px solid #d1d5db',
-              borderRadius: '8px',
-              fontSize: '0.875rem',
-              backgroundColor: 'white',
-              cursor: 'pointer',
-            }}>
+            <button
+              type="submit"
+              style={{
+                padding: '0.4rem 1rem',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                fontSize: '0.875rem',
+                backgroundColor: 'white',
+                cursor: 'pointer',
+              }}
+            >
               Sign out
             </button>
           </form>
@@ -54,8 +56,6 @@ export default async function DashboardPage() {
       </header>
 
       <main style={{ padding: '2rem', maxWidth: '960px', margin: '0 auto' }}>
-
-        {/* Welcome card */}
         <div style={{
           backgroundColor: 'white',
           borderRadius: '12px',
@@ -76,9 +76,30 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        {/* Profile summary cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+        <form action={startSession} style={{ marginBottom: '1.5rem' }}>
+          <button
+            type="submit"
+            style={{
+              padding: '0.75rem 1.5rem',
+              backgroundColor: '#01696f',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '1rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+            }}
+          >
+            Start Practice Session
+          </button>
+        </form>
 
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: '1rem',
+          marginBottom: '1.5rem'
+        }}>
           <div style={{
             backgroundColor: 'white',
             borderRadius: '12px',
@@ -128,10 +149,8 @@ export default async function DashboardPage() {
               ))}
             </div>
           </div>
-
         </div>
 
-        {/* Target companies */}
         {userProfile?.target_companies?.length > 0 && (
           <div style={{
             backgroundColor: 'white',
@@ -158,7 +177,6 @@ export default async function DashboardPage() {
             </div>
           </div>
         )}
-
       </main>
     </div>
   )
