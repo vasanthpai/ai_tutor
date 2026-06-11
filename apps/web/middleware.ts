@@ -2,18 +2,14 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  })
+  let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
+        getAll() { return request.cookies.getAll() },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
@@ -27,24 +23,37 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Get the current user — DO NOT use getSession() here
-  // getUser() makes a real server call and cannot be faked
   const { data: { user } } = await supabase.auth.getUser()
-
   const { pathname } = request.nextUrl
 
-  // If user is NOT logged in and tries to access protected routes
-  if (!user && pathname.startsWith('/dashboard')) {
+  // Not logged in → send to login (except auth pages)
+  if (!user && !pathname.startsWith('/login') && !pathname.startsWith('/signup')) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  // If user IS logged in and visits login or signup
+  // Logged in user visiting login/signup → send to dashboard
   if (user && (pathname === '/login' || pathname === '/signup')) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)
+  }
+
+  // Logged in user → check if onboarding is done
+  if (user && pathname !== '/onboarding') {
+    const { data: userProfile } = await supabase
+      .from('user_profiles')
+      .select('user_id')
+      .eq('user_id', user.id)
+      .single()
+
+    // No user_profile row means onboarding not done
+    if (!userProfile && pathname !== '/onboarding') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/onboarding'
+      return NextResponse.redirect(url)
+    }
   }
 
   return supabaseResponse
@@ -52,7 +61,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Run middleware on all routes except static files and images
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
